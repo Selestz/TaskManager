@@ -1,0 +1,172 @@
+@model IEnumerable<TaskManager.Models.TaskItem>
+
+@{
+    ViewData["Title"] = "Мои задачи";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1><i class="bi bi-list-task"></i> Мои задачи</h1>
+        </div>
+        <div class="col-md-6 text-end">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Создать задачу
+            </a>
+        </div>
+    </div>
+
+    <!-- Фильтры и поиск -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="searchString" 
+                               value="@ViewData["CurrentFilter"]" placeholder="Поиск по названию или описанию...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="filterStatus">
+                            <option value="">Все статусы</option>
+                            <option value="active" selected="@(ViewData["CurrentStatusFilter"]?.ToString() == "active")">Активные</option>
+                            <option value="completed" selected="@(ViewData["CurrentStatusFilter"]?.ToString() == "completed")">Выполненные</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="filterPriority">
+                            <option value="">Все приоритеты</option>
+                            <option value="Urgent" selected="@(ViewData["CurrentPriorityFilter"]?.ToString() == "Urgent")">Срочный</option>
+                            <option value="High" selected="@(ViewData["CurrentPriorityFilter"]?.ToString() == "High")">Высокий</option>
+                            <option value="Medium" selected="@(ViewData["CurrentPriorityFilter"]?.ToString() == "Medium")">Средний</option>
+                            <option value="Low" selected="@(ViewData["CurrentPriorityFilter"]?.ToString() == "Low")">Низкий</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="bi bi-search"></i> Поиск
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Сортировка -->
+    <div class="mb-3">
+        <small class="text-muted">
+            Сортировать:
+            <a asp-action="Index" asp-route-sortOrder="@ViewData["TitleSortParam"]" 
+               asp-route-searchString="@ViewData["CurrentFilter"]"
+               asp-route-filterStatus="@ViewData["CurrentStatusFilter"]"
+               asp-route-filterPriority="@ViewData["CurrentPriorityFilter"]">Название</a> |
+            <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParam"]"
+               asp-route-searchString="@ViewData["CurrentFilter"]"
+               asp-route-filterStatus="@ViewData["CurrentStatusFilter"]"
+               asp-route-filterPriority="@ViewData["CurrentPriorityFilter"]">Срок</a> |
+            <a asp-action="Index" asp-route-sortOrder="@ViewData["PrioritySortParam"]"
+               asp-route-searchString="@ViewData["CurrentFilter"]"
+               asp-route-filterStatus="@ViewData["CurrentStatusFilter"]"
+               asp-route-filterPriority="@ViewData["CurrentPriorityFilter"]">Приоритет</a>
+        </small>
+    </div>
+
+    <!-- Список задач -->
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 @(item.IsCompleted ? "border-success" : "")">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0 @(item.IsCompleted ? "text-decoration-line-through text-muted" : "")">
+                                    @item.Title
+                                </h5>
+                                <span class="badge @GetPriorityBadgeClass(item.Priority)">
+                                    @GetPriorityText(item.Priority)
+                                </span>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="card-text text-muted small">
+                                    @(item.Description.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description)
+                                </p>
+                            }
+                            
+                            @if (item.DueDate.HasValue)
+                            {
+                                <p class="small mb-2">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <span class="@(item.DueDate.Value < DateTime.Now && !item.IsCompleted ? "text-danger fw-bold" : "")">
+                                        @item.DueDate.Value.ToString("dd.MM.yyyy")
+                                    </span>
+                                </p>
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <form asp-action="ToggleComplete" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm @(item.IsCompleted ? "btn-outline-success" : "btn-success")">
+                                        <i class="bi @(item.IsCompleted ? "bi-arrow-counterclockwise" : "bi-check-circle")"></i>
+                                        @(item.IsCompleted ? "Вернуть" : "Выполнено")
+                                    </button>
+                                </form>
+                                
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Подробнее">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Изменить">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted small">
+                            <i class="bi bi-clock"></i> Создано: @item.CreatedAt.ToString("dd.MM.yyyy")
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> Задач не найдено. 
+            <a asp-action="Create" class="alert-link">Создайте первую задачу!</a>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetPriorityBadgeClass(TaskManager.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            TaskManager.Models.TaskPriority.Urgent => "bg-danger",
+            TaskManager.Models.TaskPriority.High => "bg-warning text-dark",
+            TaskManager.Models.TaskPriority.Medium => "bg-info",
+            TaskManager.Models.TaskPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetPriorityText(TaskManager.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            TaskManager.Models.TaskPriority.Urgent => "Срочный",
+            TaskManager.Models.TaskPriority.High => "Высокий",
+            TaskManager.Models.TaskPriority.Medium => "Средний",
+            TaskManager.Models.TaskPriority.Low => "Низкий",
+            _ => "Средний"
+        };
+    }
+}

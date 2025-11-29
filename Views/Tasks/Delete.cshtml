@@ -1,0 +1,67 @@
+@model TaskManager.Models.TaskItem
+
+@{
+    ViewData["Title"] = "Удалить задачу";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-danger"><i class="bi bi-exclamation-triangle"></i> Удалить задачу?</h1>
+            <hr />
+            
+            <div class="alert alert-warning">
+                <strong>Внимание!</strong> Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">@Model.Title</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <p><strong>Описание:</strong> @Model.Description</p>
+                    }
+                    
+                    <p><strong>Приоритет:</strong> @GetPriorityText(Model.Priority)</p>
+                    
+                    @if (Model.DueDate.HasValue)
+                    {
+                        <p><strong>Срок выполнения:</strong> @Model.DueDate.Value.ToString("dd.MM.yyyy")</p>
+                    }
+                    
+                    <p><strong>Статус:</strong> @(Model.IsCompleted ? "Выполнено" : "В работе")</p>
+                    <p><strong>Дата создания:</strong> @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
+                </div>
+            </div>
+            
+            <form asp-action="Delete" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Да, удалить
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPriorityText(TaskManager.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            TaskManager.Models.TaskPriority.Urgent => "Срочный",
+            TaskManager.Models.TaskPriority.High => "Высокий",
+            TaskManager.Models.TaskPriority.Medium => "Средний",
+            TaskManager.Models.TaskPriority.Low => "Низкий",
+            _ => "Средний"
+        };
+    }
+}

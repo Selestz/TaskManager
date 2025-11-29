@@ -1,0 +1,114 @@
+@model TaskManager.Models.TaskItem
+
+@{
+    ViewData["Title"] = "Подробности задачи";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1><i class="bi bi-eye"></i> Подробности задачи</h1>
+            <hr />
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 @(Model.IsCompleted ? "text-decoration-line-through text-muted" : "")">
+                        @Model.Title
+                    </h4>
+                    <span class="badge @GetPriorityBadgeClass(Model.Priority)">
+                        @GetPriorityText(Model.Priority)
+                    </span>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="mb-3">
+                            <h6 class="text-muted">Описание:</h6>
+                            <p>@Model.Description</p>
+                        </div>
+                    }
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Срок выполнения:</h6>
+                            <p>
+                                @if (Model.DueDate.HasValue)
+                                {
+                                    <span class="@(Model.DueDate.Value < DateTime.Now && !Model.IsCompleted ? "text-danger fw-bold" : "")">
+                                        <i class="bi bi-calendar-event"></i> @Model.DueDate.Value.ToString("dd MMMM yyyy")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Не указан</span>
+                                }
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Статус:</h6>
+                            <p>
+                                @if (Model.IsCompleted)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Выполнено
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-hourglass-split"></i> В работе
+                                    </span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">Дата создания:</h6>
+                        <p><i class="bi bi-clock"></i> @Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Изменить
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Удалить
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary ms-auto">
+                            <i class="bi bi-arrow-left"></i> К списку
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPriorityBadgeClass(TaskManager.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            TaskManager.Models.TaskPriority.Urgent => "bg-danger",
+            TaskManager.Models.TaskPriority.High => "bg-warning text-dark",
+            TaskManager.Models.TaskPriority.Medium => "bg-info",
+            TaskManager.Models.TaskPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetPriorityText(TaskManager.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            TaskManager.Models.TaskPriority.Urgent => "Срочный",
+            TaskManager.Models.TaskPriority.High => "Высокий",
+            TaskManager.Models.TaskPriority.Medium => "Средний",
+            TaskManager.Models.TaskPriority.Low => "Низкий",
+            _ => "Средний"
+        };
+    }
+}
