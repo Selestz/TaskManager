@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.Data;
@@ -5,13 +7,16 @@ using TaskManager.Models;
 
 namespace TaskManager.Controllers
 {
+    [Authorize]
     public class TasksController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TasksController(ApplicationDbContext context)
+        public TasksController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Tasks
@@ -24,8 +29,8 @@ namespace TaskManager.Controllers
             ViewData["CurrentStatusFilter"] = filterStatus;
             ViewData["CurrentPriorityFilter"] = filterPriority;
 
-            var tasks = from t in _context.Tasks
-                        select t;
+            var userId = _userManager.GetUserId(User);
+            var tasks = _context.Tasks.Where(t => t.UserId == userId);
 
             // Поиск
             if (!String.IsNullOrEmpty(searchString))
@@ -96,6 +101,7 @@ namespace TaskManager.Controllers
             if (ModelState.IsValid)
             {
                 taskItem.CreatedAt = DateTime.Now;
+                taskItem.UserId = _userManager.GetUserId(User);
                 _context.Add(taskItem);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

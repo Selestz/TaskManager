@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.Models;
 
 namespace TaskManager.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -16,8 +17,15 @@ namespace TaskManager.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Seed данные для демонстрации
-            modelBuilder.Entity<TaskItem>().HasData(
+            // Настройка связи TaskItem -> User
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.User)
+                .WithMany(u => u.Tasks)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Seed данные убираем, так как теперь нужен UserId
+            /*modelBuilder.Entity<TaskItem>().HasData(
                 new TaskItem
                 {
                     Id = 1,
@@ -48,7 +56,7 @@ namespace TaskManager.Data
                     IsCompleted = false,
                     CreatedAt = DateTime.Now.AddDays(-2)
                 }
-            );
+            );*/
         }
     }
 }

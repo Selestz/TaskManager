@@ -19,6 +19,10 @@ namespace TaskManager.Models
         [Display(Name = "Название")]
         public string Title { get; set; } = string.Empty;
 
+        // Связь с пользователем
+        public string? UserId { get; set; }
+        public ApplicationUser? User { get; set; }
+
         [StringLength(1000, ErrorMessage = "Описание не может превышать 1000 символов")]
         [Display(Name = "Описание")]
         public string? Description { get; set; }
